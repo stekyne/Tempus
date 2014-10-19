@@ -1,11 +1,22 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "Controller\Parameters.cpp"
 
-TempusAudioProcessor::TempusAudioProcessor() : 
-	masterVolume (1.0f)
+TempusAudioProcessor::TempusAudioProcessor()
 {
-    //addParameter ()
+    addParameter (masterVolume = new MainVolumeParam);
+    addParameter (dryVolume = new DryVolumeParam);
+    addParameter (wetVolume = new WetVolumeParam);
+
+    for (int i = 0; i < MAX_NUM_TAPS; ++i)
+    {
+        addParameter (delayEnabled[i] = new DelayEnabledParam);
+        addParameter (delayVolume[i] = new DelayVolumeParam);
+        addParameter (delayPan[i] = new DelayPanParam);
+        addParameter (delayAmount[i] = new DelayTimeAmountParam);       
+        addParameter (delayFeedback[i] = new DelayFeedbackParam);
+        addParameter (delayModSpeed[i] = new DelayModSpeedParam);
+        addParameter (delayModAmount[i] = new DelayModAmountParam);
+    }
 }
 
 TempusAudioProcessor::~TempusAudioProcessor()
@@ -19,37 +30,32 @@ const String TempusAudioProcessor::getName() const
 
 int TempusAudioProcessor::getNumParameters()
 {
-	return Parameters::NumParameters;
+    return getParameters ().size ();
 }
 
 float TempusAudioProcessor::getParameter (int index)
 {
-	jassert (index < static_cast<int> (NumParameters));
-	return parameters[index].getValue ();
+    jassert (index < getNumParameters ());
+    return getParameters ().getUnchecked (index)->getValue ();
 }
 
 void TempusAudioProcessor::setParameter (int index, float newValue)
 {
-	jassert (index < static_cast<int> (NumParameters));
-	parameters[index].setValue (newValue);
+    jassert (index < getNumParameters ());
+    getParameters ().getUnchecked (index)->setValue (newValue);
 }
 
 const String TempusAudioProcessor::getParameterName (int index)
 {
-	jassert (index < static_cast<int> (NumParameters));
-	return parameters[index].getName ();
+    jassert (index < getNumParameters ());
+    return getParameters ().getUnchecked (index)->getName (512);
 }
 
 const String TempusAudioProcessor::getParameterText (int index)
 {
-	jassert (index < static_cast<int> (NumParameters));
-	return parameters[index].getValueAsString ();
-}
-
-String TempusAudioProcessor::getParameterName (int parameterIndex, int maximumStringLength)
-{
-    
-    return String::empty;
+    jassert (index < getNumParameters ());
+    const auto value = getParameters ().getUnchecked (index)->getValue ();
+    return getParameters ().getUnchecked (index)->getText (value, 512);
 }
 
 const String TempusAudioProcessor::getInputChannelName (int channelIndex) const
@@ -102,7 +108,7 @@ double TempusAudioProcessor::getTailLengthSeconds() const
 
 int TempusAudioProcessor::getNumPrograms()
 {
-	return 0;
+	return 1;
 }
 
 int TempusAudioProcessor::getCurrentProgram()
@@ -152,7 +158,7 @@ void TempusAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& 
 		delayLine[tap].process (inputBuffer, buffer.getNumSamples ());
 	}
 
-	buffer.applyGain (masterVolume);
+	buffer.applyGain (masterVolume->getValue ());
 
 	for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
 		buffer.clear (i, 0, buffer.getNumSamples());

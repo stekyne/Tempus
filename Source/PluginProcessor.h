@@ -3,6 +3,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "DSP\Delay.h"
+#include "Controller\Parameters.h"
 
 class TempusAudioProcessor  : public AudioProcessor
 {
@@ -25,7 +26,6 @@ public:
     void setParameter (int index, float newValue) override;
     const String getParameterName (int index) override;
     const String getParameterText (int index) override;
-    String getParameterName (int parameterIndex, int maximumStringLength) override;
 
     const String getInputChannelName (int channelIndex) const override;
     const String getOutputChannelName (int channelIndex) const override;
@@ -51,7 +51,18 @@ private:
     static const int MAX_NUM_TAPS = 1;
     
     StereoVarDelayLine delayLine[MAX_NUM_TAPS];
-    float masterVolume = 1.0f;
+
+    MainVolumeParam* masterVolume;
+    DryVolumeParam* dryVolume;
+    WetVolumeParam* wetVolume;
+
+    DelayEnabledParam* delayEnabled[MAX_NUM_TAPS];
+    DelayVolumeParam* delayVolume[MAX_NUM_TAPS];
+    DelayTimeAmountParam* delayAmount[MAX_NUM_TAPS];
+    DelayPanParam* delayPan[MAX_NUM_TAPS];
+    DelayFeedbackParam* delayFeedback[MAX_NUM_TAPS];
+    DelayModSpeedParam* delayModSpeed[MAX_NUM_TAPS];
+    DelayModAmountParam* delayModAmount[MAX_NUM_TAPS];
 };
 
 #endif

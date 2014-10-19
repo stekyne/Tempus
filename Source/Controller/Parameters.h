@@ -3,148 +3,263 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-enum Parameters
+// TODO convert to decibels instead of normalized
+struct MainVolumeParam : public AudioProcessorParameter
 {
-    Delay_1_Enabled,
-    Delay_1_Volume,
-    Delay_1_Delay,
-    Delay_1_Pan,
-    Delay_1_Feedback,
-    Delay_1_ModSpeed,
-    Delay_1_ModAmount,
-
-    Delay_2_Enabled,
-    Delay_2_Volume,
-    Delay_2_Delay,
-    Delay_2_Pan,
-    Delay_2_Feedback,
-    Delay_2_ModSpeed,
-    Delay_2_ModAmount,
-
-    Delay_3_Enabled,
-    Delay_3_Volume,
-    Delay_3_Delay,
-    Delay_3_Pan,
-    Delay_3_Feedback,
-    Delay_3_ModSpeed,
-    Delay_3_ModAmount,
-
-    Delay_4_Enabled,
-    Delay_4_Volume,
-    Delay_4_Delay,
-    Delay_4_Pan,
-    Delay_4_Feedback,
-    Delay_4_ModSpeed,
-    Delay_4_ModAmount,
-
-    Delay_5_Enabled,
-    Delay_5_Volume,
-    Delay_5_Delay,
-    Delay_5_Pan,
-    Delay_5_Feedback,
-    Delay_5_ModSpeed,
-    Delay_5_ModAmount,
-
-    Delay_6_Enabled,
-    Delay_6_Volume,
-    Delay_6_Delay,
-    Delay_6_Pan,
-    Delay_6_Feedback,
-    Delay_6_ModSpeed,
-    Delay_6_ModAmount,
-
-    Delay_7_Enabled,
-    Delay_7_Volume,
-    Delay_7_Delay,
-    Delay_7_Pan,
-    Delay_7_Feedback,
-    Delay_7_ModSpeed,
-    Delay_7_ModAmount,
-
-    Delay_8_Enabled,
-    Delay_8_Volume,
-    Delay_8_Delay,
-    Delay_8_Pan,
-    Delay_8_Feedback,
-    Delay_8_ModSpeed,
-    Delay_8_ModAmount,
-
-    MasterVolume,
-    DryMix,
-    WetMix,
-
-    NumParameters,
-    Empty
-};
-
-// Used for printing the parameter value
-enum ParameterType
-{
-    Bool,           // Switch, on/off
-    Hertz,          // Parameter represents frequency
-    Normalized,     // 0.0 - 1.0 value
-    MilliSeconds    // float number that represents time in ms
-};
-
-struct Parameter
-{
-    Parameter (Parameters param, float defaultValue, String _name, 
-               ParameterType _type) :
-        id (param),
-        value (defaultValue),
-        name (_name),
-        type (_type)
-    {}
-
-    inline int getID () const
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { value = newValue; }
+    virtual float getDefaultValue () const { return 1.f; }
+    virtual String getName (int /*maximumStringLength*/) const { return "Main Volume"; }
+    virtual String getLabel () const { return "dBs"; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
     {
-        return id;
+        return String::formatted ("%.2f dBs", value);
     }
-
-    inline float getValue ()
+    virtual float getValueForText (const String& text) const
     {
-        hasChanged = false;
-        return value;
-    }
-
-    inline void setValue (float newValue)
-    {
-        value = newValue;
-        hasChanged = true;
-    }
-
-    inline String getName () const
-    {
-        return name;
-    }
-
-    String getValueAsString () const
-    {
-        switch (type)
-        {
-        case ParameterType::Bool:
-            return value == 0.0 ? "On" : "Off";
-
-        case ParameterType::Hertz:
-            return String::formatted ("%.2f Hz", value);
-
-        case ParameterType::Normalized:
-            return String::formatted ("%.2f", value);
-
-        case ParameterType::MilliSeconds:
-            return String::formatted ("%.2f ms", value);
-
-        default: 
-            return String (value);
-        }
+        const auto index = text.indexOf (0, "dBs");
+        const auto subString = text.substring (index);
+        return subString.getFloatValue ();
     }
 
 private:
-    String name = String::empty;
-    float value = 0.f;
-    ParameterType type;
-    Parameters id;
-    bool hasChanged = false;
+    float value {1.f};
+};
+
+struct DryVolumeParam : public AudioProcessorParameter
+{
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { value = newValue; }
+    virtual float getDefaultValue () const { return 1.f; }
+    virtual String getName (int /*maximumStringLength*/) const { return "Dry Volume"; }
+    virtual String getLabel () const { return "dBs"; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f dBs", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        const auto index = text.indexOf (0, "dBs");
+        const auto subString = text.substring (index);
+        return subString.getFloatValue ();
+    }
+
+private:
+    float value {1.f};
+};
+
+struct WetVolumeParam : public AudioProcessorParameter
+{
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { value = newValue; }
+    virtual float getDefaultValue () const { return 1.f; }
+    virtual String getName (int /*maximumStringLength*/) const { return "Wet Volume"; }
+    virtual String getLabel () const { return "dBs"; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f dBs", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        const auto index = text.indexOf (0, "dBs");
+        const auto subString = text.substring (index);
+        return subString.getFloatValue ();
+    }
+
+private:
+    float value {1.f};
+};
+
+struct DelayEnabledParam : public AudioProcessorParameter
+{
+    DelayEnabledParam () : delayNum (++instanceCount) {}
+    virtual float getValue () const { return isEnabled; }
+    virtual void setValue (float newValue)
+    {
+        if (newValue > 0.5f) isEnabled = true;
+        else isEnabled = false;
+    }
+    virtual float getDefaultValue () const { return false; }
+    virtual String getName (int maximumStringLength) const
+    {
+        return String::formatted ("Delay#%d Enabled", delayNum);
+    }
+    virtual String getLabel () const { return String::empty; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return isEnabled ? String::formatted ("Delay #%d Enabled", delayNum)
+            : String::formatted ("Delay#%d Disabled", delayNum);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        if (text.contains ("Enabled"))
+            return 1.f;
+        return 0.f;
+    }
+
+private:
+    bool isEnabled {false};
+    int delayNum {1};
+    static int instanceCount;
+};
+
+struct DelayVolumeParam : public AudioProcessorParameter
+{
+    DelayVolumeParam () : delayNum (++instanceCount) {}
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { value = newValue; }
+    virtual float getDefaultValue () const { return 1.f; }
+    virtual String getName (int /*maximumStringLength*/) const { 
+        return String::formatted ("Delay#%d Volume", delayNum); 
+    }
+    virtual String getLabel () const { return "dBs"; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f dBs", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        const auto index = text.indexOf (0, "dBs");
+        const auto subString = text.substring (index);
+        return subString.getFloatValue ();
+    }
+
+private:
+    float value {1.f};
+    int delayNum {1};
+    static int instanceCount;
+};
+
+struct DelayTimeAmountParam : public AudioProcessorParameter
+{
+    DelayTimeAmountParam () : delayNum (++instanceCount) {}
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { value = newValue; }
+    virtual float getDefaultValue () const { return 0.2f; }
+    virtual String getName (int maximumStringLength) const { 
+        return String::formatted ("Delay#%d Amount (s)", delayNum); 
+    }
+    virtual String getLabel () const { return "ms"; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f ms", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        const auto index = text.indexOf (0, "ms");
+        const auto subString = text.substring (index);
+        return subString.getFloatValue ();
+    }
+
+private:
+    float value {.2f};
+    int delayNum {1};
+    static int instanceCount;
+};
+
+struct DelayPanParam : public AudioProcessorParameter
+{
+    DelayPanParam () : delayNum (++instanceCount) {}
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { newValue = value; }
+    virtual float getDefaultValue () const { return 0.5f; }
+    virtual String getName (int maximumStringLength) const {
+        return String::formatted ("Delay#%d Pan", delayNum);
+    }
+    virtual String getLabel () const { return String::empty; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        return text.getFloatValue ();
+    }
+
+private:
+    float value {.5f};
+    int delayNum {1};
+    static int instanceCount;
+};
+
+struct DelayFeedbackParam : public AudioProcessorParameter
+{
+    DelayFeedbackParam () : delayNum (++instanceCount) {}
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { value = newValue; }
+    virtual float getDefaultValue () const { return 0.f; }
+    virtual String getName (int maximumStringLength) const {
+        return String::formatted ("Delay#%d Feedback", delayNum);
+    }
+    virtual String getLabel () const { return "%%"; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f %%", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        const auto index = text.indexOf (0, "%%");
+        const auto subString = text.substring (index);
+        return subString.getFloatValue ();
+    }
+
+private:
+    float value {0.f};
+    int delayNum {1};
+    static int instanceCount;
+};
+
+struct DelayModSpeedParam : public AudioProcessorParameter
+{
+    DelayModSpeedParam () : delayNum (++instanceCount) {}
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { value = newValue; }
+    virtual float getDefaultValue () const { return 2.f; }
+    virtual String getName (int maximumStringLength) const {
+        return String::formatted ("Delay#%d Mod. Speed", delayNum);
+    }
+    virtual String getLabel () const { return "Hz"; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f Hz", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        const auto index = text.indexOf (0, "Hz");
+        const auto subString = text.substring (index);
+        return subString.getFloatValue ();
+    }
+
+private:
+    float value {2.f};
+    int delayNum {1};
+    static int instanceCount;
+};
+
+struct DelayModAmountParam : public AudioProcessorParameter
+{
+    DelayModAmountParam () : delayNum (++instanceCount) {}
+    virtual float getValue () const { return value; }
+    virtual void setValue (float newValue) { newValue = value; }
+    virtual float getDefaultValue () const { return 0.f; }
+    virtual String getName (int maximumStringLength) const
+    {
+        return String::formatted ("Delay#%d Mod. Amount", delayNum);
+    }
+    virtual String getLabel () const { return String::empty; }
+    virtual String getText (float value, int /*maximumStringLength*/) const
+    {
+        return String::formatted ("%.2f", value);
+    }
+    virtual float getValueForText (const String& text) const
+    {
+        return text.getFloatValue ();
+    }
+    
+private:
+    float value {0.f};
+    int delayNum {1};
+    static int instanceCount;
 };
 
 #endif
