@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{5F7C3620-A687-F47E-4358-359B28E76E24}") = "Tempus", "Tempus.vcxproj", "{8DD3B39B-7BDD-8129-02FA-E5E20D342556}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8DD3B39B-7BDD-8129-02FA-E5E20D342556}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8DD3B39B-7BDD-8129-02FA-E5E20D342556}.Debug|Win32.Build.0 = Debug|Win32
+		{8DD3B39B-7BDD-8129-02FA-E5E20D342556}.Release|Win32.ActiveCfg = Release|Win32
+		{8DD3B39B-7BDD-8129-02FA-E5E20D342556}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
