@@ -80,12 +80,12 @@ struct DelayEnabledParam : public AudioProcessorParameter
         else isEnabled = false;
     }
     virtual float getDefaultValue () const { return false; }
-    virtual String getName (int maximumStringLength) const
+    virtual String getName (int /*maximumStringLength*/) const
     {
         return String::formatted ("Delay#%d Enabled", delayNum);
     }
     virtual String getLabel () const { return String::empty; }
-    virtual String getText (float value, int /*maximumStringLength*/) const
+    virtual String getText (float /*value*/, int /*maximumStringLength*/) const
     {
         return isEnabled ? String::formatted ("Delay #%d Enabled", delayNum)
             : String::formatted ("Delay#%d Disabled", delayNum);
@@ -136,7 +136,8 @@ struct DelayTimeAmountParam : public AudioProcessorParameter
     virtual float getValue () const { return value; }
     virtual void setValue (float newValue) { value = newValue; }
     virtual float getDefaultValue () const { return 0.2f; }
-    virtual String getName (int maximumStringLength) const { 
+    virtual String getName (int /*maximumStringLength*/) const
+    {
         return String::formatted ("Delay#%d Amount (s)", delayNum); 
     }
     virtual String getLabel () const { return "ms"; }
@@ -163,7 +164,8 @@ struct DelayPanParam : public AudioProcessorParameter
     virtual float getValue () const { return value; }
     virtual void setValue (float newValue) { newValue = value; }
     virtual float getDefaultValue () const { return 0.5f; }
-    virtual String getName (int maximumStringLength) const {
+    virtual String getName (int /*maximumStringLength*/) const
+    {
         return String::formatted ("Delay#%d Pan", delayNum);
     }
     virtual String getLabel () const { return String::empty; }
@@ -188,7 +190,8 @@ struct DelayFeedbackParam : public AudioProcessorParameter
     virtual float getValue () const { return value; }
     virtual void setValue (float newValue) { value = newValue; }
     virtual float getDefaultValue () const { return 0.f; }
-    virtual String getName (int maximumStringLength) const {
+    virtual String getName (int /*maximumStringLength*/) const
+    {
         return String::formatted ("Delay#%d Feedback", delayNum);
     }
     virtual String getLabel () const { return "%%"; }
@@ -215,7 +218,8 @@ struct DelayModSpeedParam : public AudioProcessorParameter
     virtual float getValue () const { return value; }
     virtual void setValue (float newValue) { value = newValue; }
     virtual float getDefaultValue () const { return 2.f; }
-    virtual String getName (int maximumStringLength) const {
+    virtual String getName (int /*maximumStringLength*/) const
+    {
         return String::formatted ("Delay#%d Mod. Speed", delayNum);
     }
     virtual String getLabel () const { return "Hz"; }
@@ -242,7 +246,7 @@ struct DelayModAmountParam : public AudioProcessorParameter
     virtual float getValue () const { return value; }
     virtual void setValue (float newValue) { newValue = value; }
     virtual float getDefaultValue () const { return 0.f; }
-    virtual String getName (int maximumStringLength) const
+    virtual String getName (int /*maximumStringLength*/) const
     {
         return String::formatted ("Delay#%d Mod. Amount", delayNum);
     }

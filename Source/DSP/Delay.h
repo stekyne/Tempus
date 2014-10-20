@@ -60,6 +60,11 @@ struct VarDelayLine
         }
     }
 
+    void processStereo (float* inputBuffer, int blockSize, float* delay)
+    {
+
+    }
+
 public:
     float delayInSecs, feedback, pan, volume, modSpeed, modAmount;
     bool isEnabled;

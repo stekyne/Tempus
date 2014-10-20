@@ -129,13 +129,13 @@ void TempusAudioProcessor::changeProgramName (int index, const String& newName)
 {
 }
 
-void TempusAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void TempusAudioProcessor::prepareToPlay (double sampleRate, int /*samplesPerBlock*/)
 {
 	const auto maxDelayInSamples = (int)ceil (MAX_DELAY_IN_SECONDS * sampleRate);
 
 	for (int i = 0; i < MAX_NUM_TAPS; ++i)
 	{
-		delayLine[i].initialise (sampleRate, maxDelayInSamples);
+		delayLine[i].initialise ((float)sampleRate, maxDelayInSamples);
 	}
 }
 
@@ -145,14 +145,15 @@ void TempusAudioProcessor::releaseResources ()
 
 void TempusAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
-	auto inputBuffer = buffer.getArrayOfChannels ();
+    auto inputBuffer = buffer.getArrayOfWritePointers ();
 	const auto numChans = buffer.getNumChannels ();
 
 	jassert (numChans <= 2);
 
 	for (int tap = 0; tap < MAX_NUM_TAPS; ++tap)
 	{
-		if (delayLine[tap].isEnabled () == false)
+        // Don't process if disabled (i.e < 0.5)
+        if (delayEnabled[tap]->getValue () < 0.5f)
 			continue;
 
 		delayLine[tap].process (inputBuffer, buffer.getNumSamples ());

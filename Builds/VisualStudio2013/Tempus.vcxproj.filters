@@ -315,12 +315,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Source\DSP\DelayTap.cpp">
-      <Filter>Tempus\Source\DSP</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\DSP\VDelayLine.cpp">
-      <Filter>Tempus\Source\DSP</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\PluginProcessor.cpp">
       <Filter>Tempus\Source</Filter>
     </ClCompile>
@@ -1455,21 +1449,12 @@
     <ClCompile Include="..\..\JuceLibraryCode\modules\juce_audio_plugin_client\VST3\juce_VST3_Wrapper.cpp">
       <Filter>Juce Library Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Controller\Parameters.cpp">
+      <Filter>Tempus\Source\Controller</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Source\DSP\Delay.h">
-      <Filter>Tempus\Source\DSP</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\DSP\DelayTap.h">
-      <Filter>Tempus\Source\DSP</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\DSP\DSP.h">
-      <Filter>Tempus\Source\DSP</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\DSP\LFO.h">
-      <Filter>Tempus\Source\DSP</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\DSP\VDelayLine.h">
       <Filter>Tempus\Source\DSP</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Controller\Parameters.h">
