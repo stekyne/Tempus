@@ -6,21 +6,7 @@
 
 struct VarDelayLine
 {
-    VarDelayLine () :
-        maxDelayInSamples (0),
-        writeIndex (0),
-        interpSample (0.f),
-        readIndex (0.f),
-        delayTimeInSamples (0.f),
-        readIndexFraction (0.f),
-        sampleRate (0.f),
-        delayInSecs (0.f), 
-        feedback (0.f), 
-        pan (0.f), 
-        volume (0.f), 
-        modSpeed (0.f), 
-        modAmount (0.f),
-        isEnabled (false)
+    VarDelayLine ()
     {}
 
     ~VarDelayLine () 
@@ -30,6 +16,19 @@ struct VarDelayLine
     {
         this->sampleRate = sampleRate;
         this->maxDelayInSamples = maxDelayInSamples;
+    }
+
+    void updateParameters (float delayInSeconds, float feedBack, float pan, 
+                           float volume, float modSpeed, float modAmount, 
+                           bool isEnabled)
+    {
+        this->delayInSecs = delayInSeconds;
+        this->feedback = feedBack;
+        this->pan = pan;
+        this->volume = volume;
+        this->modSpeed = modSpeed;
+        this->modAmount = modAmount;
+        this->isEnabled = isEnabled;
     }
 
     void process (float* inputBuffer, int blockSize, float* delay)
@@ -49,9 +48,9 @@ struct VarDelayLine
 
             readIndexFraction = readIndex - (int)readIndex;
 
-            interpSample = delay[(int)readIndex] + 
-                            readIndexFraction * (delay[(int)readIndex + 1] - 
-                            delay[(int)readIndex]);
+            const float interpSample = delay[(int)readIndex] + 
+                                        readIndexFraction * (delay[(int)readIndex + 1] - 
+                                        delay[(int)readIndex]);
 
             delay[writeIndex] = inputBuffer[i] + (interpSample * feedback);
             inputBuffer[i] = interpSample;
@@ -60,19 +59,12 @@ struct VarDelayLine
         }
     }
 
-    void processStereo (float* inputBuffer, int blockSize, float* delay)
-    {
-
-    }
-
-public:
-    float delayInSecs, feedback, pan, volume, modSpeed, modAmount;
-    bool isEnabled;
-
 private:
-    int maxDelayInSamples, writeIndex;
-    float interpSample, readIndex, delayTimeInSamples, 
-          readIndexFraction, sampleRate;
+    float delayInSecs {0.f}, feedback {0.f}, pan {0.f}, volume {0.f}, 
+          modSpeed {0.f}, modAmount {0.f}, readIndex {0.f}, delayTimeInSamples {0.f}, 
+          readIndexFraction {0.f}, sampleRate {0.f};
+    int maxDelayInSamples {0}, writeIndex {0};
+    bool isEnabled {false};
 };
 
 struct StereoVarDelayLine
@@ -91,33 +83,14 @@ public:
         delete[] delayHistory;
     }
 
-    void setVolume (float volume)
+    void updateParameters (float volume, float pan, bool isEnabled, float delayAmount,
+                           float feedBack, float modAmount, float modFrequency)
     {
-        delayLine[0].volume = volume;
-        delayLine[1].volume = volume;
-    }
+        const auto leftPan = sinf ((1.0f - pan) * DSP::PI_HALFf);
+        const auto rightPan = sinf (pan * DSP::PI_HALFf);
 
-    float getVolume ()
-    {
-        return delayLine[0].volume;
-    }
-
-    void setPanning (float panning)
-    {
-        this->panning = panning;
-
-        delayLine[0].pan = sinf ((1.0f - panning) * DSP::PI_HALFf);
-        delayLine[1].pan = sinf (panning * DSP::PI_HALFf);
-    }
-
-    float getPanning ()
-    {
-        return panning;
-    }
-
-    bool isEnabled () const
-    {
-        return delayLine[0].isEnabled;
+        delayLine[0].updateParameters (delayAmount, feedBack, leftPan, volume, modFrequency, modAmount, isEnabled);
+        delayLine[1].updateParameters (delayAmount, feedBack, rightPan, volume, modFrequency, modAmount, isEnabled);
     }
 
     void initialise (float sampleRate, int maxDelayInSamples)
@@ -145,7 +118,6 @@ public:
 private:
     float** delayHistory = nullptr;
     VarDelayLine delayLine[2];
-    float panning = 0.5f;
 };
 
 #endif

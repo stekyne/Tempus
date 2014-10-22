@@ -156,6 +156,11 @@ void TempusAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& 
         if (delayEnabled[tap]->getValue () < 0.5f)
 			continue;
 
+        delayLine[tap].updateParameters (delayVolume[tap]->getValue (), delayPan[tap]->getValue (), 
+                                         delayEnabled[tap]->getValue () < 0.5f ? false : true, 
+                                         delayAmount[tap]->getValue (), delayFeedback[tap]->getValue (), 
+                                         delayModAmount[tap]->getValue (), delayModSpeed[tap]->getValue ());
+
 		delayLine[tap].process (inputBuffer, buffer.getNumSamples ());
 	}
 
