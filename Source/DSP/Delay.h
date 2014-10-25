@@ -1,8 +1,9 @@
 #ifndef DSPDELAY_H_INCLUDED
 #define DSPDELAY_H_INCLUDED
 
-#include "DSP.h"
 #include <math.h>
+#include <cassert>
+#include "DSP.h"
 
 struct VarDelayLine
 {
@@ -28,6 +29,11 @@ struct VarDelayLine
         this->volume = volume;
         this->modSpeed = modSpeed;
         this->modAmount = modAmount;
+        
+        // If previously disabled, clear delay history
+        if (this->isEnabled == false && isEnabled == true)
+            shouldClearDelay = true;
+
         this->isEnabled = isEnabled;
     }
 
@@ -37,6 +43,12 @@ struct VarDelayLine
 
         if (delayTimeInSamples > maxDelayInSamples)
             delayTimeInSamples = (float)maxDelayInSamples;
+
+        if (shouldClearDelay)
+        {
+            zeromem (delay, sizeof (float) * maxDelayInSamples);
+            shouldClearDelay = false;
+        }
 
         for (int i = 0; i < blockSize; i++)
         {
@@ -48,11 +60,22 @@ struct VarDelayLine
 
             readIndexFraction = readIndex - (int)readIndex;
 
+            assert (readIndex >= 0);
+            assert (readIndex < maxDelayInSamples);
+            assert (writeIndex >= 0);
+            assert (writeIndex < maxDelayInSamples);
+
             const float interpSample = delay[(int)readIndex] + 
                                         readIndexFraction * (delay[(int)readIndex + 1] - 
                                         delay[(int)readIndex]);
 
-            delay[writeIndex] = inputBuffer[i] + (interpSample * feedback);
+            float writeSample = inputBuffer[i] + (interpSample * feedback);
+
+            // Clamp the write sample to +- 1.f
+            if (writeSample > 1.f) writeSample = 1.f;
+            if (writeSample < -1.f) writeSample = -1.f;
+
+            delay[writeIndex] = writeSample;
             inputBuffer[i] = interpSample;
             writeIndex = (writeIndex != maxDelayInSamples - 1 ? 
                             writeIndex + 1 : 0);
@@ -64,7 +87,7 @@ private:
           modSpeed {0.f}, modAmount {0.f}, readIndex {0.f}, delayTimeInSamples {0.f}, 
           readIndexFraction {0.f}, sampleRate {0.f};
     int maxDelayInSamples {0}, writeIndex {0};
-    bool isEnabled {false};
+    bool isEnabled {false}, shouldClearDelay {false};
 };
 
 struct StereoVarDelayLine
@@ -89,8 +112,11 @@ public:
         const auto leftPan = sinf ((1.0f - pan) * DSP::PI_HALFf);
         const auto rightPan = sinf (pan * DSP::PI_HALFf);
 
-        delayLine[0].updateParameters (delayAmount, feedBack, leftPan, volume, modFrequency, modAmount, isEnabled);
-        delayLine[1].updateParameters (delayAmount, feedBack, rightPan, volume, modFrequency, modAmount, isEnabled);
+        delayLine[0].updateParameters (delayAmount, feedBack, leftPan, volume, 
+                                       modFrequency, modAmount, isEnabled);
+
+        delayLine[1].updateParameters (delayAmount, feedBack, rightPan, volume, 
+                                       modFrequency, modAmount, isEnabled);
     }
 
     void initialise (float sampleRate, int maxDelayInSamples)
@@ -102,8 +128,8 @@ public:
         delayHistory[0] = new float[maxDelayInSamples];
         delayHistory[1] = new float[maxDelayInSamples];
 
-        zeromem (delayHistory[0], maxDelayInSamples);
-        zeromem (delayHistory[1], maxDelayInSamples);
+        zeromem (delayHistory[0], maxDelayInSamples * sizeof (float));
+        zeromem (delayHistory[1], maxDelayInSamples * sizeof (float));
     }
 
     void process (float** buffers, int blockSize)

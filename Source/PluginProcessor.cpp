@@ -36,24 +36,28 @@ int TempusAudioProcessor::getNumParameters()
 float TempusAudioProcessor::getParameter (int index)
 {
     jassert (index < getNumParameters ());
+    std::lock_guard<std::mutex> lock (paramLock);
     return getParameters ().getUnchecked (index)->getValue ();
 }
 
 void TempusAudioProcessor::setParameter (int index, float newValue)
 {
     jassert (index < getNumParameters ());
+    std::lock_guard<std::mutex> lock (paramLock);
     getParameters ().getUnchecked (index)->setValue (newValue);
 }
 
 const String TempusAudioProcessor::getParameterName (int index)
 {
-    jassert (index < getNumParameters ());
+    jassert (index < getNumParameters ()); 
+    std::lock_guard<std::mutex> lock (paramLock);
     return getParameters ().getUnchecked (index)->getName (512);
 }
 
 const String TempusAudioProcessor::getParameterText (int index)
 {
     jassert (index < getNumParameters ());
+    std::lock_guard<std::mutex> lock (paramLock);
     const auto value = getParameters ().getUnchecked (index)->getValue ();
     return getParameters ().getUnchecked (index)->getText (value, 512);
 }
@@ -145,26 +149,29 @@ void TempusAudioProcessor::releaseResources ()
 
 void TempusAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
-    auto inputBuffer = buffer.getArrayOfWritePointers ();
+    auto outputBuffer = buffer.getArrayOfWritePointers ();
 	const auto numChans = buffer.getNumChannels ();
 
 	jassert (numChans <= 2);
 
-	for (int tap = 0; tap < MAX_NUM_TAPS; ++tap)
-	{
-        // Don't process if disabled (i.e < 0.5)
-        if (delayEnabled[tap]->getValue () < 0.5f)
-			continue;
+    std::lock_guard<std::mutex> lock (paramLock);
+    {
+        for (int tap = 0; tap < MAX_NUM_TAPS; ++tap)
+        {
+            // Don't process if disabled (i.e < 0.5)
+            if (delayEnabled[tap]->getValue () < 0.5f)
+                continue;
 
-        delayLine[tap].updateParameters (delayVolume[tap]->getValue (), delayPan[tap]->getValue (), 
-                                         delayEnabled[tap]->getValue () < 0.5f ? false : true, 
-                                         delayAmount[tap]->getValue (), delayFeedback[tap]->getValue (), 
-                                         delayModAmount[tap]->getValue (), delayModSpeed[tap]->getValue ());
+            delayLine[tap].updateParameters (delayVolume[tap]->getValue (), delayPan[tap]->getValue (),
+                                             delayEnabled[tap]->getValue () < 0.5f ? false : true,
+                                             delayAmount[tap]->getValue (), delayFeedback[tap]->getValue (),
+                                             delayModAmount[tap]->getValue (), delayModSpeed[tap]->getValue ());
 
-		delayLine[tap].process (inputBuffer, buffer.getNumSamples ());
-	}
+            delayLine[tap].process (outputBuffer, buffer.getNumSamples ());
+        }
 
-	buffer.applyGain (masterVolume->getValue ());
+        buffer.applyGain (masterVolume->getValue ());
+    }
 
 	for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
 		buffer.clear (i, 0, buffer.getNumSamples());

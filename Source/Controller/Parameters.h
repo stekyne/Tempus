@@ -162,7 +162,7 @@ struct DelayPanParam : public AudioProcessorParameter
 {
     DelayPanParam () : delayNum (++instanceCount) {}
     virtual float getValue () const { return value; }
-    virtual void setValue (float newValue) { newValue = value; }
+    virtual void setValue (float newValue) { value = newValue; }
     virtual float getDefaultValue () const { return 0.5f; }
     virtual String getName (int /*maximumStringLength*/) const
     {
@@ -244,7 +244,7 @@ struct DelayModAmountParam : public AudioProcessorParameter
 {
     DelayModAmountParam () : delayNum (++instanceCount) {}
     virtual float getValue () const { return value; }
-    virtual void setValue (float newValue) { newValue = value; }
+    virtual void setValue (float newValue) { value = newValue; }
     virtual float getDefaultValue () const { return 0.f; }
     virtual String getName (int /*maximumStringLength*/) const
     {

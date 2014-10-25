@@ -1,6 +1,7 @@
 #ifndef PLUGINPROCESSOR_H_INCLUDED
 #define PLUGINPROCESSOR_H_INCLUDED
 
+#include <mutex>
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "DSP\Delay.h"
 #include "Controller\Parameters.h"
@@ -50,6 +51,7 @@ private:
     const float MAX_DELAY_IN_SECONDS = 10.f;
     static const int MAX_NUM_TAPS = 1;
     
+    std::mutex paramLock;
     StereoVarDelayLine delayLine[MAX_NUM_TAPS];
 
     MainVolumeParam* masterVolume;
