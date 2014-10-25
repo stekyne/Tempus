@@ -76,7 +76,7 @@ struct VarDelayLine
             if (writeSample < -1.f) writeSample = -1.f;
 
             delay[writeIndex] = writeSample;
-            inputBuffer[i] = interpSample;
+            inputBuffer[i] = interpSample * volume * pan;
             writeIndex = (writeIndex != maxDelayInSamples - 1 ? 
                             writeIndex + 1 : 0);
         }
