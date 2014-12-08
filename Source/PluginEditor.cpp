@@ -5,13 +5,15 @@ TempusAudioProcessorEditor::TempusAudioProcessorEditor (TempusAudioProcessor* ow
     :	AudioProcessorEditor (ownerFilter),
 		processor (ownerFilter)
 {
-    setSize (400, 300);
+    setSize (600, 480);
 }
 
 TempusAudioProcessorEditor::~TempusAudioProcessorEditor()
 {
 }
 
-void TempusAudioProcessorEditor::paint (Graphics& /*g*/)
+void TempusAudioProcessorEditor::paint (Graphics& g)
 {
+    g.setColour (Colours::white);
+    g.fillRect (0, 0, getWidth (), 35);
 }

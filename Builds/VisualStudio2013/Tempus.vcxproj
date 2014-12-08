@@ -1234,6 +1234,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\Source\DSP\Delay.h" />
     <ClInclude Include="..\..\Source\Controller\Parameters.h" />
+    <ClInclude Include="..\..\Source\DSP\DSP.h" />
     <ClInclude Include="..\..\Source\PluginProcessor.h" />
     <ClInclude Include="..\..\Source\PluginEditor.h" />
     <ClInclude Include="..\..\JuceLibraryCode\modules\juce_audio_basics\buffers\juce_AudioDataConverters.h" />

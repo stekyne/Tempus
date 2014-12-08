@@ -152,18 +152,17 @@ void TempusAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& 
     auto outputBuffer = buffer.getArrayOfWritePointers ();
 	const auto numChans = buffer.getNumChannels ();
 
-	jassert (numChans <= 2);
+	jassert (numChans <= 2 && numChans > 0);
 
     std::lock_guard<std::mutex> lock (paramLock);
     {
         for (int tap = 0; tap < MAX_NUM_TAPS; ++tap)
         {
-            // Don't process if disabled (i.e < 0.5)
             if (delayEnabled[tap]->getValue () < 0.5f)
                 continue;
 
             delayLine[tap].updateParameters (delayVolume[tap]->getValue (), delayPan[tap]->getValue (),
-                                             delayEnabled[tap]->getValue () < 0.5f ? false : true,
+                                             delayEnabled[tap]->getValue () > 0.5f,
                                              delayAmount[tap]->getValue (), delayFeedback[tap]->getValue (),
                                              delayModAmount[tap]->getValue (), delayModSpeed[tap]->getValue ());
 
