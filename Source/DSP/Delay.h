@@ -4,10 +4,13 @@
 // Needs to be defined for MSVC otherwise M_PI is undefined
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <memory>
 #include <cassert>
 
 #include "DSP.h"
+#include "../Controller/Parameters.h"
 
+template <typename PanType>
 struct VarDelayLine
 {
     void initialise (float sampleRate, int maxDelayInSamples)
@@ -16,39 +19,35 @@ struct VarDelayLine
         this->maxDelayInSamples = maxDelayInSamples;
 
         delayLineFilter.reset ();
-    }
 
-    void updateParameters (float delayInSeconds, float feedBack, float pan, 
-                           float volume, float modSpeed, float modAmount, 
-                           bool isEnabled)
-    {
-        this->delayInSecs = delayInSeconds;
-        this->feedback = feedBack;
-        this->pan = pan;
-        this->volume = volume;
-        this->modSpeed = modSpeed;
-        this->modAmount = modAmount;
-        
-        // If previously disabled, clear delay history
-        if (this->isEnabled == false && isEnabled == true)
-            shouldClearDelay = true;
-
-        this->isEnabled = isEnabled;
+        assert (enabledParam != nullptr &&
+                volumeParam != nullptr &&
+                delayTimeParam != nullptr &&
+                panParam != nullptr &&
+                feedbackParam != nullptr &&
+                modSpeedParam != nullptr &&
+                modAmountParam != nullptr);
     }
 
     void process (float* inputBuffer, int blockSize, float* delay)
     {
-        if (shouldClearDelay)
+        // If the delay line was previously active but now disabled, clear the delay history
+        if (enabledParam->getValue () < 0.5f && isEnabled == true)
         {
             zeromem (delay, sizeof (float) * maxDelayInSamples);
-            shouldClearDelay = false;
         }
+
+        // Processor is disabled so return without further processing
+        isEnabled = enabledParam->getValue () > 0.5f;
+        if (isEnabled == false)
+            return;
 
         for (int i = 0; i < blockSize; ++i)
         {
-            // Smooth incoming delay time, avoid big jumps which might glitch   
-            delayTimeInSamples =
-                delayLineFilter.process (delayInSecs) * sampleRate;
+            auto delayTime = delayTimeParam->getValue ();
+
+            // Smooth incoming delay time, avoid big jumps which might glitch the sound
+            delayTimeInSamples = (float)(delayLineFilter.process (delayTime) * sampleRate);
 
             // Check delay time is within range
             assert (delayTimeInSamples >= 0.f);
@@ -60,7 +59,7 @@ struct VarDelayLine
             readIndex = validateReadPosition (writeIndex - delayTimeInSamples);
             readIndexFraction = readIndex - (long)readIndex;
 
-            // Ensure we are not reading or writing from/to the buffer outside of the valid range
+            // Ensure we are not reading from or writing to the buffer outside of the valid range
             assert (readIndex >= 0);
             assert (readIndex < maxDelayInSamples);
             assert (writeIndex >= 0);
@@ -72,21 +71,37 @@ struct VarDelayLine
                                         (readIndexFraction * (delay[readPositionIndex + 1] -
                                         delay[readPositionIndex]));
 
-            // writeSample will be written into the delay buffer
-            float writeSample = inputBuffer[i] + (interpSample * feedback);
-
-            // Clamp the write sample to +- 1.f
+            // 'writeSample' is the current input plus delay feedback and will be written into the delay buffer
+            // TODO should convert to soft clipper instead of hard
+            float writeSample = inputBuffer[i] + (interpSample * feedbackParam->getValue ());
             if (writeSample > 1.f) writeSample = 1.f;
             else if (writeSample < -1.f) writeSample = -1.f;
+            
+            // Write the sample back into the delay and output the delayed sample generated
             delay[writeIndex] = writeSample;
-
-            // Output the delayed sample generated
-            inputBuffer[i] = interpSample * volume * pan;
+            inputBuffer[i] = interpSample * volumeParam->getValue () * 
+                             PanType::process (panParam->getValue ());
 
             // Validate the writeIndex and ensure it stays in range
-            writeIndex = (writeIndex != maxDelayInSamples - 1 ? 
-                            writeIndex + 1 : 0);
+            writeIndex = writeIndex != maxDelayInSamples - 1 ? writeIndex + 1 : 0;
         }
+    }
+
+    void setExternalParameters (DelayEnabledParam* enabledParam,
+                                DelayVolumeParam* volumeParam,
+                                DelayTimeAmountParam* delayTimeParam,
+                                DelayPanParam* panParam,
+                                DelayFeedbackParam* feedbackParam,
+                                DelayModSpeedParam* modSpeedParam,
+                                DelayModAmountParam* modAmountParam)
+    {
+        this->enabledParam = enabledParam;
+        this->volumeParam = volumeParam;
+        this->delayTimeParam = delayTimeParam;
+        this->panParam = panParam;
+        this->feedbackParam = feedbackParam;
+        this->modSpeedParam = modSpeedParam;
+        this->modAmountParam = modAmountParam;
     }
 
 private:
@@ -107,10 +122,16 @@ private:
     }
 
 private:
-    DSP::OnePole delayLineFilter {0.0003f};
-    float delayInSecs {0.f}, feedback {0.f}, pan {0.f}, volume {0.f}, 
-          modSpeed {0.f}, modAmount {0.f}, readIndex {0.f}, delayTimeInSamples {0.f}, 
-          readIndexFraction {0.f}, sampleRate {0.f};
+    DSP::OnePole delayLineFilter {0.003f};
+    DelayEnabledParam* enabledParam;
+    DelayVolumeParam* volumeParam;
+    DelayTimeAmountParam* delayTimeParam;
+    DelayPanParam* panParam;
+    DelayFeedbackParam* feedbackParam;
+    DelayModSpeedParam* modSpeedParam;
+    DelayModAmountParam* modAmountParam;
+
+    float readIndex {0.f}, delayTimeInSamples {0.f}, readIndexFraction {0.f}, sampleRate {0.f};
     long maxDelayInSamples {0}, writeIndex {0};
     bool isEnabled {false}, shouldClearDelay {false};
 };
@@ -130,25 +151,12 @@ public:
         delete[] delayHistory;
     }
 
-    void updateParameters (float volume, float pan, bool isEnabled, float delayAmount,
-                           float feedBack, float modAmount, float modFrequency)
-    {
-        const auto leftPan = sinf ((1.0f - pan) * M_PI_2);
-        const auto rightPan = sinf (pan * M_PI_2);
-
-        delayLine[0].updateParameters (delayAmount, feedBack, leftPan, volume, 
-                                       modFrequency, modAmount, isEnabled);
-
-        delayLine[1].updateParameters (delayAmount, feedBack, rightPan, volume, 
-                                       modFrequency, modAmount, isEnabled);
-    }
-
     void initialise (float sampleRate, int maxDelayInSamples)
     {
         this->maxDelayInSamples = maxDelayInSamples;
 
-        delayLine[0].initialise (sampleRate, maxDelayInSamples);
-        delayLine[1].initialise (sampleRate, maxDelayInSamples);
+        delayLeft.initialise (sampleRate, maxDelayInSamples);
+        delayRight.initialise (sampleRate, maxDelayInSamples);
 
         delayHistory = new float*[2];
         delayHistory[0] = new float[maxDelayInSamples];
@@ -165,13 +173,28 @@ public:
 
         assert (blockSize <= maxDelayInSamples);
 
-        delayLine[0].process (bufferL, blockSize, delayHistory[0]);
-        delayLine[1].process (bufferR, blockSize, delayHistory[1]);
+        delayLeft.process (bufferL, blockSize, delayHistory[0]);
+        delayRight.process (bufferR, blockSize, delayHistory[1]);
+    }
+
+    void setExternalParameters (DelayEnabledParam* enabledParam,
+                                DelayVolumeParam* volumeParam,
+                                DelayTimeAmountParam* delayTimeParam,
+                                DelayPanParam* panParam,
+                                DelayFeedbackParam* feedbackParam,
+                                DelayModSpeedParam* modSpeedParam,
+                                DelayModAmountParam* modAmountParam)
+    {
+        delayLeft.setExternalParameters (enabledParam, volumeParam, delayTimeParam, panParam, 
+                                         feedbackParam, modSpeedParam, modAmountParam);
+        delayRight.setExternalParameters (enabledParam, volumeParam, delayTimeParam, panParam, 
+                                          feedbackParam, modSpeedParam, modAmountParam);
     }
 
 private:
+    VarDelayLine<DSP::PanLeft> delayLeft;
+    VarDelayLine<DSP::PanRight> delayRight;
     float** delayHistory = nullptr;
-    VarDelayLine delayLine[2];
     int maxDelayInSamples {0};
 };
 

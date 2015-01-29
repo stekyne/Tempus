@@ -221,7 +221,7 @@ public:
         {}
     }
 
-    juce_DeclareSingleton (SharedMessageThread, false);
+    juce_DeclareSingleton (SharedMessageThread, false)
 
 private:
     bool initialised;
@@ -245,8 +245,8 @@ class JuceVSTWrapper  : public AudioEffectX,
 {
 public:
     //==============================================================================
-    JuceVSTWrapper (audioMasterCallback audioMaster, AudioProcessor* const af)
-       : AudioEffectX (audioMaster, af->getNumPrograms(), af->getNumParameters()),
+    JuceVSTWrapper (audioMasterCallback audioMasterCB, AudioProcessor* const af)
+       : AudioEffectX (audioMasterCB, af->getNumPrograms(), af->getNumParameters()),
          filter (af),
          chunkMemoryTime (0),
          speakerIn (kSpeakerArrEmpty),
@@ -281,7 +281,6 @@ public:
         canProcessReplacing (true);
 
         isSynth ((JucePlugin_IsSynth) != 0);
-        noTail (filter->getTailLengthSeconds() <= 0);
         setInitialDelay (filter->getLatencySamples());
         programsAreChunks (true);
 
@@ -409,7 +408,7 @@ public:
         if (strcmp (text, "hasCockosViewAsConfig") == 0)
         {
             useNSView = true;
-            return 0xbeef0000;
+            return (VstInt32) 0xbeef0000;
         }
        #endif
 
@@ -664,17 +663,17 @@ public:
             if (rate <= 0.0)
                 rate = 44100.0;
 
-            const int blockSize = getBlockSize();
-            jassert (blockSize > 0);
+            const int currentBlockSize = getBlockSize();
+            jassert (currentBlockSize > 0);
 
             firstProcessCallback = true;
 
             filter->setNonRealtime (getCurrentProcessLevel() == 4 /* kVstProcessLevelOffline */);
-            filter->setPlayConfigDetails (numInChans, numOutChans, rate, blockSize);
+            filter->setPlayConfigDetails (numInChans, numOutChans, rate, currentBlockSize);
 
             deleteTempChannels();
 
-            filter->prepareToPlay (rate, blockSize);
+            filter->prepareToPlay (rate, currentBlockSize);
 
             midiEvents.ensureSize (2048);
             midiEvents.clear();
@@ -1185,6 +1184,8 @@ public:
               #elif JUCE_LINUX
                 editorComp->addToDesktop (0, ptr);
                 hostWindow = (Window) ptr;
+                Window editorWnd = (Window) editorComp->getWindowHandle();
+                XReparentWindow (display, editorWnd, hostWindow, 0, 0);
               #else
                 hostWindow = attachComponentToWindowRef (editorComp, ptr, useNSView);
               #endif

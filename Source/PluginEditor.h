@@ -2,7 +2,8 @@
 #define PLUGINEDITOR_H_INCLUDED
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "PluginProcessor.h"
+
+class TempusAudioProcessor;
 
 class TempusAudioProcessorEditor  : public AudioProcessorEditor
 {

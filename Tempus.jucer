@@ -7,7 +7,7 @@
               pluginChannelConfigs="{1, 1}, {2, 2}" pluginIsSynth="0" pluginWantsMidiIn="0"
               pluginProducesMidiOut="0" pluginSilenceInIsSilenceOut="0" pluginEditorRequiresKeys="0"
               pluginAUExportPrefix="TempusAU" pluginRTASCategory="" aaxIdentifier="com.SK.Tempus"
-              pluginAAXCategory="AAX_ePlugInCategory_Dynamics" jucerVersion="3.1.0"
+              pluginAAXCategory="AAX_ePlugInCategory_Dynamics" jucerVersion="3.1.1"
               buildVST3="0" buildRTAS="0" buildAAX="0">
   <MAINGROUP id="VxQOrT" name="Tempus">
     <GROUP id="{C32D9348-BD0E-6B57-A2D5-4B7A50E3933B}" name="Source">
@@ -15,12 +15,7 @@
       <GROUP id="{C31A79F0-8E6B-57D7-5803-F25EDA642B9B}" name="Presets"/>
       <GROUP id="{844A14A4-F5FA-1977-0D87-BA3449BD7145}" name="DSP">
         <FILE id="W3T2dn" name="Delay.h" compile="0" resource="0" file="Source/DSP/Delay.h"/>
-        <FILE id="LkTq5p" name="DelayTap.cpp" compile="1" resource="0" file="Source/DSP/DelayTap.cpp"/>
-        <FILE id="djo6WS" name="DelayTap.h" compile="0" resource="0" file="Source/DSP/DelayTap.h"/>
         <FILE id="HrHj0H" name="DSP.h" compile="0" resource="0" file="Source/DSP/DSP.h"/>
-        <FILE id="m6VIKt" name="LFO.h" compile="0" resource="0" file="Source/DSP/LFO.h"/>
-        <FILE id="urfbWl" name="VDelayLine.cpp" compile="1" resource="0" file="Source/DSP/VDelayLine.cpp"/>
-        <FILE id="Q0Ly0X" name="VDelayLine.h" compile="0" resource="0" file="Source/DSP/VDelayLine.h"/>
       </GROUP>
       <GROUP id="{7BF510EE-4E67-7774-6513-2694D725B9F8}" name="Controller">
         <FILE id="ONKANr" name="Parameters.cpp" compile="1" resource="0" file="Source/Controller/Parameters.cpp"/>

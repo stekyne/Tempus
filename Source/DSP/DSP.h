@@ -27,11 +27,30 @@ public:
 
     void reset ()
     {
-        a0 = 1.0; b1 = z1 = 0.0;
+        a0 = 1.0; 
+        b1 = z1 = 0.0;
     }
 
 private:
     double a0 {1.0}, b1 {0.0}, z1 {0.0};
+};
+
+struct PanLeft
+{
+    // TODO maybe convert to a sin approximate function for better performance
+    static inline float process (float pan)
+    {
+        return sinf ((float)((1.0f - pan) * M_PI_2));
+    }
+};
+
+struct PanRight
+{
+    // TODO maybe convert to a sin approximate function for better performance
+    static inline float process (float pan)
+    {
+        return sinf ((float)(pan * M_PI_2));
+    }
 };
 
 }

@@ -11,12 +11,16 @@ TempusAudioProcessor::TempusAudioProcessor()
     {
         addParameter (delayEnabled[i] = new DelayEnabledParam);
         addParameter (delayVolume[i] = new DelayVolumeParam);
+        addParameter (delayAmount[i] = new DelayTimeAmountParam);
         addParameter (delayPan[i] = new DelayPanParam);
-        addParameter (delayAmount[i] = new DelayTimeAmountParam);       
         addParameter (delayFeedback[i] = new DelayFeedbackParam);
         addParameter (delayModSpeed[i] = new DelayModSpeedParam);
         addParameter (delayModAmount[i] = new DelayModAmountParam);
+
+        delayLine[i].setExternalParameters (delayEnabled[i], delayVolume[i], delayAmount[i], delayPan[i],
+                                            delayFeedback[i], delayModSpeed[i], delayModAmount[i]);
     }
+
 }
 
 TempusAudioProcessor::~TempusAudioProcessor()
@@ -36,28 +40,28 @@ int TempusAudioProcessor::getNumParameters()
 float TempusAudioProcessor::getParameter (int index)
 {
     jassert (index < getNumParameters ());
-    std::lock_guard<std::mutex> lock (paramLock);
+    //std::lock_guard<std::mutex> lock (paramLock);
     return getParameters ().getUnchecked (index)->getValue ();
 }
 
 void TempusAudioProcessor::setParameter (int index, float newValue)
 {
     jassert (index < getNumParameters ());
-    std::lock_guard<std::mutex> lock (paramLock);
+    //std::lock_guard<std::mutex> lock (paramLock);
     getParameters ().getUnchecked (index)->setValue (newValue);
 }
 
 const String TempusAudioProcessor::getParameterName (int index)
 {
     jassert (index < getNumParameters ()); 
-    std::lock_guard<std::mutex> lock (paramLock);
+    //std::lock_guard<std::mutex> lock (paramLock);
     return getParameters ().getUnchecked (index)->getName (512);
 }
 
 const String TempusAudioProcessor::getParameterText (int index)
 {
     jassert (index < getNumParameters ());
-    std::lock_guard<std::mutex> lock (paramLock);
+    //std::lock_guard<std::mutex> lock (paramLock);
     const auto value = getParameters ().getUnchecked (index)->getValue ();
     return getParameters ().getUnchecked (index)->getText (value, 512);
 }
@@ -120,16 +124,16 @@ int TempusAudioProcessor::getCurrentProgram()
 	return 0;
 }
 
-void TempusAudioProcessor::setCurrentProgram (int index)
+void TempusAudioProcessor::setCurrentProgram (int /*index*/)
 {
 }
 
-const String TempusAudioProcessor::getProgramName (int index)
+const String TempusAudioProcessor::getProgramName (int /*index*/)
 {
 	return String::empty;
 }
 
-void TempusAudioProcessor::changeProgramName (int index, const String& newName)
+void TempusAudioProcessor::changeProgramName (int /*index*/, const String& /*newName*/)
 {
 }
 
@@ -147,30 +151,17 @@ void TempusAudioProcessor::releaseResources ()
 {
 }
 
-void TempusAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
+void TempusAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& /*midiMessages*/)
 {
     auto outputBuffer = buffer.getArrayOfWritePointers ();
 	const auto numChans = buffer.getNumChannels ();
 
-	jassert (numChans <= 2 && numChans > 0);
+    jassert (numChans > 0 && numChans <= 2);
 
-    std::lock_guard<std::mutex> lock (paramLock);
-    {
-        for (int tap = 0; tap < MAX_NUM_TAPS; ++tap)
-        {
-            if (delayEnabled[tap]->getValue () < 0.5f)
-                continue;
+    for (int tap = 0; tap < MAX_NUM_TAPS; ++tap)
+        delayLine[tap].process (outputBuffer, buffer.getNumSamples ());
 
-            delayLine[tap].updateParameters (delayVolume[tap]->getValue (), delayPan[tap]->getValue (),
-                                             delayEnabled[tap]->getValue () > 0.5f,
-                                             delayAmount[tap]->getValue (), delayFeedback[tap]->getValue (),
-                                             delayModAmount[tap]->getValue (), delayModSpeed[tap]->getValue ());
-
-            delayLine[tap].process (outputBuffer, buffer.getNumSamples ());
-        }
-
-        buffer.applyGain (masterVolume->getValue ());
-    }
+    buffer.applyGain (masterVolume->getValue ());
 
 	for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
 		buffer.clear (i, 0, buffer.getNumSamples());
@@ -186,11 +177,11 @@ AudioProcessorEditor* TempusAudioProcessor::createEditor()
 	return new TempusAudioProcessorEditor (this);
 }
 
-void TempusAudioProcessor::getStateInformation (MemoryBlock& destData)
+void TempusAudioProcessor::getStateInformation (MemoryBlock& /*destData*/)
 {
 }
 
-void TempusAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void TempusAudioProcessor::setStateInformation (const void* /*data*/, int /*sizeInBytes*/)
 {
 }
 
