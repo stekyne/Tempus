@@ -4,9 +4,9 @@ Tempus
 A C++ based audio plugin for time orientated audio effects. Built using the Juce framework.
 
 Features (work in progress):
-Basic variable delays
-Delay feedback
-Modulated delay lines (chorus, flange, phaser effects)
+ - Basic variable delays
+ - Delay feedback
+ - Modulated delay lines (chorus, flange, phaser effects)
 
 TODO:
  - UI needs to be completed
